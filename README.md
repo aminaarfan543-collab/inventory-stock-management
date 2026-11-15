@@ -1,17 +1,15 @@
-# flutter_app
+# Inventory & Stock Management App
 
-A new Flutter project.
+## Project Overview
+The Inventory & Stock Management App is a Flutter-based mobile application developed to simplify inventory operations for small retail businesses. It provides an organized solution for managing products, categories, suppliers, and stock levels through an intuitive and user-friendly interface.
 
-## Getting Started
+This project represents my **second mobile application development project at Artimum Tech**, contributing to my practical experience in Flutter development and mobile application design.
 
-This project is a starting point for a Flutter application.
+## Technologies Used
+- Flutter
+- Dart
+- PHP
+- MySQL
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Developer
+Developed as part of my mobile app development journey at **Artimum Tech**.
