@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
@@ -17,7 +17,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  final _usernameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   bool _loading = false;
@@ -27,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _usernameCtrl.dispose();
+    _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
@@ -43,17 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _loading = true);
     try {
-      final res = await Api.request(
-        'register',
-        method: 'POST',
-        publicRequest: true,
-        data: {
-          'full_name': _nameCtrl.text.trim(),
-          'username': _usernameCtrl.text.trim(),
-          'password': _passwordCtrl.text,
-        },
+      await FirebaseService.register(
+        _emailCtrl.text,
+        _passwordCtrl.text,
+        _nameCtrl.text,
       );
-      await Api.saveToken(res['token'].toString());
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainApp()),
@@ -109,11 +103,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           prefix: const Icon(Icons.person_outline, size: 20),
                         ),
                         InputField(
-                          label: 'Username',
-                          hint: 'Choose a unique username',
-                          controller: _usernameCtrl,
-                          validator: Validators.username,
-                          prefix: const Icon(Icons.alternate_email, size: 20),
+                          label: 'Email',
+                          hint: 'e.g. jane@example.com',
+                          controller: _emailCtrl,
+                          validator: Validators.email,
+                          keyboardType: TextInputType.emailAddress,
+                          prefix: const Icon(Icons.email_outlined, size: 20),
                         ),
                         InputField(
                           label: 'Password',

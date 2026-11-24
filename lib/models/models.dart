@@ -1,5 +1,5 @@
 class User {
-  final int id;
+  final String id;
   final String username;
   final String fullName;
   final String? email;
@@ -12,22 +12,22 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> j) => User(
-    id: int.tryParse('${j['id']}') ?? 0,
-    username: j['username']?.toString() ?? '',
+    id: j['id']?.toString() ?? '',
+    username: j['username']?.toString() ?? j['name']?.toString() ?? '',
     fullName: j['full_name']?.toString() ?? j['name']?.toString() ?? '',
     email: j['email']?.toString(),
   );
 }
 
 class Category {
-  final int id;
+  final String id;
   final String name;
   final String description;
 
   Category({required this.id, required this.name, this.description = ''});
 
   factory Category.fromJson(Map<String, dynamic> j) => Category(
-    id: int.tryParse('${j['id']}') ?? 0,
+    id: j['id']?.toString() ?? '',
     name: j['name']?.toString() ?? '',
     description: j['description']?.toString() ?? '',
   );
@@ -36,7 +36,7 @@ class Category {
 }
 
 class Supplier {
-  final int id;
+  final String id;
   final String name;
   final String phone;
   final String email;
@@ -51,7 +51,7 @@ class Supplier {
   });
 
   factory Supplier.fromJson(Map<String, dynamic> j) => Supplier(
-    id: int.tryParse('${j['id']}') ?? 0,
+    id: j['id']?.toString() ?? '',
     name: j['name']?.toString() ?? '',
     phone: j['phone']?.toString() ?? '',
     email: j['email']?.toString() ?? '',
@@ -67,12 +67,12 @@ class Supplier {
 }
 
 class Product {
-  final int id;
+  final String id;
   final String name;
   final String sku;
   final String description;
-  final int? categoryId;
-  final int? supplierId;
+  final String? categoryId;
+  final String? supplierId;
   final double unitPrice;
   final double costPrice;
   final int quantity;
@@ -98,20 +98,17 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> j) => Product(
-    id: int.tryParse('${j['id']}') ?? 0,
+    id: j['id']?.toString() ?? '',
     name: j['name']?.toString() ?? '',
     sku: j['sku']?.toString() ?? '',
     description: j['description']?.toString() ?? '',
-    categoryId: j['category_id'] != null
-        ? int.tryParse('${j['category_id']}')
-        : null,
-    supplierId: j['supplier_id'] != null
-        ? int.tryParse('${j['supplier_id']}')
-        : null,
-    unitPrice: double.tryParse('${j['unit_price'] ?? j['price']}') ?? 0,
-    costPrice: double.tryParse('${j['cost_price'] ?? j['cost']}') ?? 0,
-    quantity: int.tryParse('${j['quantity'] ?? j['stock']}') ?? 0,
-    reorderLevel: int.tryParse('${j['reorder_level'] ?? j['reorder']}') ?? 10,
+    categoryId: j['category_id']?.toString(),
+    supplierId: j['supplier_id']?.toString(),
+    unitPrice: double.tryParse('${j['unit_price'] ?? j['price'] ?? 0}') ?? 0,
+    costPrice: double.tryParse('${j['cost_price'] ?? j['cost'] ?? 0}') ?? 0,
+    quantity: int.tryParse('${j['quantity'] ?? j['stock'] ?? 0}') ?? 0,
+    reorderLevel:
+        int.tryParse('${j['reorder_level'] ?? j['reorder'] ?? 10}') ?? 10,
     createdAt: j['created_at']?.toString(),
     categoryName: j['category_name']?.toString(),
     supplierName: j['supplier_name']?.toString(),
@@ -134,7 +131,7 @@ class Product {
 }
 
 class Service {
-  final int id;
+  final String id;
   final String name;
   final String description;
   final double price;
@@ -149,10 +146,10 @@ class Service {
   });
 
   factory Service.fromJson(Map<String, dynamic> j) => Service(
-    id: int.tryParse('${j['id']}') ?? 0,
+    id: j['id']?.toString() ?? '',
     name: j['name']?.toString() ?? '',
     description: j['description']?.toString() ?? '',
-    price: double.tryParse('${j['price']}') ?? 0,
+    price: double.tryParse('${j['price'] ?? 0}') ?? 0,
     createdAt: j['created_at']?.toString(),
   );
 
@@ -164,12 +161,12 @@ class Service {
 }
 
 class StockMovement {
-  final int id;
-  final int productId;
+  final String id;
+  final String productId;
   final String type;
   final int quantity;
   final String note;
-  final int? userId;
+  final String? userId;
   final String? createdAt;
   final String? productName;
   final String? userName;
@@ -187,12 +184,12 @@ class StockMovement {
   });
 
   factory StockMovement.fromJson(Map<String, dynamic> j) => StockMovement(
-    id: int.tryParse('${j['id']}') ?? 0,
-    productId: int.tryParse('${j['product_id']}') ?? 0,
+    id: j['id']?.toString() ?? '',
+    productId: j['product_id']?.toString() ?? '',
     type: j['type']?.toString().toUpperCase() ?? 'STOCK_IN',
-    quantity: int.tryParse('${j['quantity']}') ?? 0,
+    quantity: int.tryParse('${j['quantity'] ?? 0}') ?? 0,
     note: j['note']?.toString() ?? '',
-    userId: j['user_id'] != null ? int.tryParse('${j['user_id']}') : null,
+    userId: j['user_id']?.toString(),
     createdAt: j['created_at']?.toString(),
     productName: j['product_name']?.toString(),
     userName: j['user_name']?.toString(),

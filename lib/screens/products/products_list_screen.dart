@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
 import '../../models/models.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/empty_state.dart';
@@ -9,7 +9,7 @@ import 'product_detail_screen.dart';
 import 'product_form_screen.dart';
 
 class ProductsListScreen extends StatefulWidget {
-  final int? presetCategoryId;
+  final String? presetCategoryId;
   const ProductsListScreen({super.key, this.presetCategoryId});
 
   @override
@@ -22,7 +22,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   bool _loading = true;
   String? _error;
   String _search = '';
-  int? _activeCategory;
+  String? _activeCategory;
   bool _lowOnly = false;
   String _sort = 'name_asc';
 
@@ -36,14 +36,8 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      final res = await Api.request('get_categories');
-      if (mounted) {
-        setState(() {
-          _categories = (res['categories'] as List? ?? [])
-              .map((j) => Category.fromJson(j as Map<String, dynamic>))
-              .toList();
-        });
-      }
+      final cats = await FirebaseService.getCategories();
+      if (mounted) setState(() => _categories = cats);
     } catch (_) {}
   }
 
@@ -53,18 +47,15 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
       _error = null;
     });
     try {
-      final query = <String, String>{
-        if (_search.trim().isNotEmpty) 'search': _search.trim(),
-        if (_activeCategory != null) 'category_id': '$_activeCategory',
-        if (_lowOnly) 'low_stock': '1',
-        'sort': _sort,
-      };
-      final res = await Api.request('get_products', query: query);
+      final products = await FirebaseService.getProducts(
+        search: _search.trim().isEmpty ? null : _search.trim(),
+        categoryId: _activeCategory,
+        lowStockOnly: _lowOnly,
+        sort: _sort,
+      );
       if (mounted) {
         setState(() {
-          _products = (res['products'] as List? ?? [])
-              .map((j) => Product.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _products = products;
           _loading = false;
         });
       }
@@ -348,7 +339,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

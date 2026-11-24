@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/loader.dart';
-import '../models/models.dart';
 import 'categories_screen.dart';
 import 'suppliers_screen.dart';
 import 'services/services_list_screen.dart';
@@ -20,7 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  User? _user;
+  Map<String, dynamic>? _user;
   bool _loading = true;
 
   @override
@@ -31,10 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     try {
-      final res = await Api.request('me');
+      final user = await FirebaseService.getUserData();
       if (mounted) {
         setState(() {
-          _user = User.fromJson(res['user'] as Map<String, dynamic>);
+          _user = user;
           _loading = false;
         });
       }
@@ -46,8 +45,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Loader(fullscreen: true);
-    final name = _user?.fullName ?? 'User';
-    final username = _user?.username ?? '-';
+    final name = _user?['full_name'] ?? 'User';
+    final email = _user?['email'] ?? '-';
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(
@@ -83,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Text(
-                  '@$username',
+                  email,
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
@@ -110,8 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ProductsListScreen(),
-                      ),
+                          builder: (_) => const ProductsListScreen()),
                     );
                   },
                 ),
@@ -123,8 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const CategoriesScreen(),
-                      ),
+                          builder: (_) => const CategoriesScreen()),
                     );
                   },
                 ),
@@ -136,8 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const SuppliersScreen(),
-                      ),
+                          builder: (_) => const SuppliersScreen()),
                     );
                   },
                 ),
@@ -149,8 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ServicesListScreen(),
-                      ),
+                          builder: (_) => const ServicesListScreen()),
                     );
                   },
                 ),
@@ -162,8 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const TransactionsScreen(),
-                      ),
+                          builder: (_) => const TransactionsScreen()),
                     );
                   },
                 ),
@@ -173,9 +167,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Low Stock Alerts',
                   AppColors.danger,
                   () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LowStockScreen()),
-                    );
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(
+                        builder: (_) => const LowStockScreen()));
                   },
                 ),
               ],
@@ -199,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _divider(),
                 _infoRow('Version', '1.0.0'),
                 _divider(),
-                _infoRow('Backend', 'inventory_api'),
+                _infoRow('Backend', 'Firebase'),
                 _divider(),
                 _infoRow('AI Features', 'None - fully deterministic'),
               ],
@@ -216,9 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 destructive: true,
               );
               if (ok) {
-                try {
-                  await Api.logout();
-                } catch (_) {}
+                await FirebaseService.logout();
                 widget.onLogout();
               }
             },

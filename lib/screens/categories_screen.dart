@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
@@ -19,7 +19,6 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   List<Category> _categories = [];
-  Map<int, int> _counts = {};
   bool _loading = true;
   String? _error;
 
@@ -35,20 +34,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request('get_categories');
-      final list = (res['categories'] as List? ?? [])
-          .map((j) => Category.fromJson(j as Map<String, dynamic>))
-          .toList();
-      final counts = <int, int>{};
-      for (final j in (res['categories'] as List? ?? [])) {
-        final map = j as Map<String, dynamic>;
-        final id = int.tryParse('${map['id']}') ?? 0;
-        counts[id] = int.tryParse('${map['product_count'] ?? 0}') ?? 0;
-      }
+      final cats = await FirebaseService.getCategories();
       if (mounted) {
         setState(() {
-          _categories = list;
-          _counts = counts;
+          _categories = cats;
           _loading = false;
         });
       }
@@ -81,11 +70,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
     if (!ok) return;
     try {
-      await Api.request(
-        'delete_category',
-        method: 'DELETE',
-        query: {'id': '${cat.id}'},
-      );
+      await FirebaseService.deleteCategory(cat.id);
       if (mounted) {
         Toast.show(context, 'Category deleted', isSuccess: true);
         _load();
@@ -114,7 +99,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ],
       ),
       body: _loading
-          ? const Loader(fullscreen: true, message: 'Loading categories…')
+          ? const Loader(fullscreen: true, message: 'Loading categories...')
           : _error != null
           ? EmptyState(
               title: 'Failed to load',
@@ -162,17 +147,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '${_counts[c.id] ?? 0} products',
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                       trailing: Row(
@@ -226,18 +200,15 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      final data = {
-        'name': _nameCtrl.text.trim(),
-        'description': _descCtrl.text.trim(),
-      };
+      final name = _nameCtrl.text.trim();
+      final description = _descCtrl.text.trim();
       if (widget.category == null) {
-        await Api.request('add_category', method: 'POST', data: data);
+        await FirebaseService.addCategory(name, description);
       } else {
-        await Api.request(
-          'update_category',
-          method: 'PUT',
-          query: {'id': '${widget.category!.id}'},
-          data: data,
+        await FirebaseService.updateCategory(
+          widget.category!.id,
+          name,
+          description,
         );
       }
       if (mounted) {

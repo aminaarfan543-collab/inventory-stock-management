@@ -11,8 +11,16 @@ class Toast {
     final bg = isError
         ? AppColors.danger
         : isSuccess
-        ? AppColors.success
-        : AppColors.info;
+            ? AppColors.success
+            : AppColors.info;
+
+    // DEBUG: Console mein error print karein
+    if (isError) {
+      debugPrint('====================================');
+      debugPrint('ERROR: $message');
+      debugPrint('====================================');
+    }
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -20,7 +28,7 @@ class Toast {
           content: Text(message),
           backgroundColor: bg,
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 5),
         ),
       );
   }

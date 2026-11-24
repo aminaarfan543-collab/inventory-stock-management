@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/empty_state.dart';
@@ -41,20 +41,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _error = null;
     });
     try {
-      final statsRes = await Api.request('dashboard_stats');
-      final lowRes = await Api.request('get_low_stock');
-      final txRes = await Api.request(
-        'get_transactions',
-        query: {'limit': '5'},
-      );
-
-      final stats = DashboardStats.fromJson(statsRes);
-      final low = (lowRes['products'] as List? ?? [])
-          .map((j) => Product.fromJson(j as Map<String, dynamic>))
-          .toList();
-      final recent = (txRes['transactions'] as List? ?? [])
-          .map((j) => StockMovement.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final stats = await FirebaseService.getDashboardStats();
+      final low = await FirebaseService.getLowStockProducts();
+      final recent = await FirebaseService.getTransactions(limit: 5);
 
       if (mounted) {
         setState(() {
@@ -74,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _openProduct(int id) async {
+  Future<void> _openProduct(String id) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: id)),
     );
@@ -90,12 +79,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: _loading
             ? const Loader(fullscreen: true, message: 'Loading dashboard...')
             : _error != null
-            ? EmptyState(
-                title: 'Failed to load',
-                message: _error,
-                icon: Icons.error_outline,
-              )
-            : _buildContent(),
+                ? EmptyState(
+                    title: 'Failed to load',
+                    message: _error,
+                    icon: Icons.error_outline,
+                  )
+                : _buildContent(),
       ),
     );
   }
@@ -118,7 +107,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               value: Formatters.number(s.totalProducts),
               onTap: () => Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => ProductsListScreen())),
+              ).push(MaterialPageRoute(
+                  builder: (_) => const ProductsListScreen())),
             ),
             StatCard(
               label: 'In Stock',
@@ -126,18 +116,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               accent: AppColors.secondary,
               onTap: () => Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => ProductsListScreen())),
+              ).push(MaterialPageRoute(
+                  builder: (_) => const ProductsListScreen())),
             ),
             StatCard(
               label: 'Low Stock',
               value: Formatters.number(s.lowStockCount),
-              accent: s.lowStockCount > 0
-                  ? AppColors.warning
-                  : AppColors.secondary,
+              accent:
+                  s.lowStockCount > 0 ? AppColors.warning : AppColors.secondary,
               badge: s.lowStockCount,
               onTap: () => Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => LowStockScreen())),
+              ).push(MaterialPageRoute(builder: (_) => const LowStockScreen())),
             ),
             StatCard(
               label: 'Services',
@@ -145,7 +135,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               accent: AppColors.info,
               onTap: () => Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => ServicesListScreen())),
+              ).push(MaterialPageRoute(
+                  builder: (_) => const ServicesListScreen())),
             ),
           ],
         ),
@@ -193,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.of(context)
                     .push(
                       MaterialPageRoute(
-                        builder: (_) => ProductFormScreen(mode: 'add'),
+                        builder: (_) => const ProductFormScreen(mode: 'add'),
                       ),
                     )
                     .then((_) => _load());
@@ -207,7 +198,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.of(context)
                     .push(
                       MaterialPageRoute(
-                        builder: (_) => StockMovementScreen(mode: 'STOCK_IN'),
+                        builder: (_) =>
+                            const StockMovementScreen(mode: 'STOCK_IN'),
                       ),
                     )
                     .then((_) => _load());
@@ -217,7 +209,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.of(context)
                   .push(
                     MaterialPageRoute(
-                      builder: (_) => StockMovementScreen(mode: 'STOCK_OUT'),
+                      builder: (_) =>
+                          const StockMovementScreen(mode: 'STOCK_OUT'),
                     ),
                   )
                   .then((_) => _load());
@@ -225,7 +218,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _quickAction('History', Icons.history, AppColors.info, () {
               Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => TransactionsScreen()));
+              ).push(MaterialPageRoute(
+                  builder: (_) => const TransactionsScreen()));
             }),
             _quickAction(
               'Categories',
@@ -233,7 +227,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               AppColors.warning,
               () {
                 Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => CategoriesScreen()))
+                    .push(MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen()))
                     .then((_) => _load());
               },
             ),
@@ -246,7 +241,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? GestureDetector(
                   onTap: () => Navigator.of(
                     context,
-                  ).push(MaterialPageRoute(builder: (_) => LowStockScreen())),
+                  ).push(MaterialPageRoute(
+                      builder: (_) => const LowStockScreen())),
                   child: const Text(
                     'See all',
                     style: TextStyle(
@@ -268,7 +264,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           action: _recent.isNotEmpty
               ? GestureDetector(
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => TransactionsScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const TransactionsScreen()),
                   ),
                   child: const Text(
                     'See all',
@@ -341,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: AppColors.textPrimary,
             ),
           ),
-          ?action,
+          if (action != null) action,
         ],
       ),
     );

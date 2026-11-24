@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../utils/validators.dart';
 import '../widgets/confirm_dialog.dart';
@@ -34,12 +34,10 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request('get_suppliers');
+      final sups = await FirebaseService.getSuppliers();
       if (mounted) {
         setState(() {
-          _suppliers = (res['suppliers'] as List? ?? [])
-              .map((j) => Supplier.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _suppliers = sups;
           _loading = false;
         });
       }
@@ -76,11 +74,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     );
     if (!ok) return;
     try {
-      await Api.request(
-        'delete_supplier',
-        method: 'DELETE',
-        query: {'id': '${sup.id}'},
-      );
+      await FirebaseService.deleteSupplier(sup.id);
       if (mounted) {
         Toast.show(context, 'Supplier deleted', isSuccess: true);
         _load();
@@ -109,7 +103,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         ],
       ),
       body: _loading
-          ? const Loader(fullscreen: true, message: 'Loading suppliers…')
+          ? const Loader(fullscreen: true, message: 'Loading suppliers...')
           : _error != null
           ? EmptyState(
               title: 'Failed to load',
@@ -210,14 +204,9 @@ class _SupplierFormSheetState extends State<_SupplierFormSheet> {
         'address': _addressCtrl.text.trim(),
       };
       if (widget.supplier == null) {
-        await Api.request('add_supplier', method: 'POST', data: data);
+        await FirebaseService.addSupplier(data);
       } else {
-        await Api.request(
-          'update_supplier',
-          method: 'PUT',
-          query: {'id': '${widget.supplier!.id}'},
-          data: data,
-        );
+        await FirebaseService.updateSupplier(widget.supplier!.id, data);
       }
       if (mounted) {
         Toast.show(

@@ -10,25 +10,16 @@ class Validators {
     return null;
   }
 
-  static String? username(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Username is required';
-    if (v.trim().length < 3) return 'Username must be at least 3 characters';
-    if (v.trim().length > 20) return 'Username must be at most 20 characters';
-    final ok = RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(v.trim());
-    if (!ok) return 'Only letters, numbers, _ and . allowed';
+  static String? email(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Email is required';
+    final ok = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim());
+    if (!ok) return 'Enter a valid email address';
     return null;
   }
 
   static String? password(String? v) {
     if (v == null || v.isEmpty) return 'Password is required';
     if (v.length < 6) return 'Password must be at least 6 characters';
-    return null;
-  }
-
-  static String? email(String? v) {
-    if (v == null || v.trim().isEmpty) return null;
-    final ok = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim());
-    if (!ok) return 'Enter a valid email';
     return null;
   }
 

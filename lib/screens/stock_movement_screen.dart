@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../utils/formatters.dart';
 import '../utils/validators.dart';
@@ -12,7 +12,7 @@ import '../widgets/toast.dart';
 
 class StockMovementScreen extends StatefulWidget {
   final String mode;
-  final int? productId;
+  final String? productId;
   const StockMovementScreen({super.key, required this.mode, this.productId});
 
   @override
@@ -40,26 +40,16 @@ class _StockMovementScreenState extends State<StockMovementScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await Api.request('get_products');
-      final list = (res['products'] as List? ?? [])
-          .map((j) => Product.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final list = await FirebaseService.getProducts();
       if (mounted) {
         setState(() {
           _products = isOut ? list.where((p) => p.quantity > 0).toList() : list;
           if (widget.productId != null) {
-            _selected = _products.firstWhere(
-              (p) => p.id == widget.productId,
-              orElse: () => Product(
-                id: widget.productId!,
-                name: 'Product',
-                sku: '',
-                unitPrice: 0,
-                costPrice: 0,
-                quantity: 0,
-                reorderLevel: 10,
-              ),
-            );
+            try {
+              _selected = _products.firstWhere((p) => p.id == widget.productId);
+            } catch (_) {
+              _selected = list.firstWhere((p) => p.id == widget.productId);
+            }
           }
           _loading = false;
         });
@@ -100,26 +90,24 @@ class _StockMovementScreenState extends State<StockMovementScreen> {
 
     setState(() => _saving = true);
     try {
-      final action = isOut ? 'stock_out' : 'stock_in';
-      await Api.request(
-        action,
-        method: 'POST',
-        data: {
-          'product_id': _selected!.id,
-          'quantity': qty,
-          'note': _noteCtrl.text.trim(),
-        },
+      final newQty = await FirebaseService.stockMovement(
+        _selected!.id,
+        widget.mode,
+        qty,
+        _noteCtrl.text.trim(),
       );
       await _load();
-      if (_selected != null && _products.any((p) => p.id == _selected!.id)) {
-        _selected = _products.firstWhere((p) => p.id == _selected!.id);
+      if (_selected != null) {
+        try {
+          _selected = _products.firstWhere((p) => p.id == _selected!.id);
+        } catch (_) {}
       }
       if (mounted) {
         Toast.show(
           context,
           isOut
-              ? 'Removed $qty unit(s). New stock: ${_selected?.quantity ?? 0}'
-              : 'Added $qty unit(s). New stock: ${_selected?.quantity ?? 0}',
+              ? 'Removed $qty unit(s). New stock: $newQty'
+              : 'Added $qty unit(s). New stock: $newQty',
           isSuccess: true,
         );
         setState(() {

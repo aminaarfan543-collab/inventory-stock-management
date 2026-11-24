@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
 import '../../models/models.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/confirm_dialog.dart';
@@ -12,7 +12,7 @@ import 'product_form_screen.dart';
 import '../stock_movement_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final int productId;
+  final String productId;
   const ProductDetailScreen({super.key, required this.productId});
 
   @override
@@ -37,18 +37,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request(
-        'get_product',
-        query: {'id': '${widget.productId}'},
+      final p = await FirebaseService.getProduct(widget.productId);
+      final txs = await FirebaseService.getTransactions(
+        productId: widget.productId,
       );
-      final p = Product.fromJson(res['product'] as Map<String, dynamic>);
-      final txRes = await Api.request(
-        'get_transactions',
-        query: {'product_id': '${widget.productId}'},
-      );
-      final txs = (txRes['transactions'] as List? ?? [])
-          .map((j) => StockMovement.fromJson(j as Map<String, dynamic>))
-          .toList();
       if (mounted) {
         setState(() {
           _product = p;
@@ -77,11 +69,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
     if (!ok) return;
     try {
-      await Api.request(
-        'delete_product',
-        method: 'DELETE',
-        query: {'id': '${_product!.id}'},
-      );
+      await FirebaseService.deleteProduct(_product!.id);
       if (mounted) {
         Toast.show(context, 'Product deleted', isSuccess: true);
         Navigator.of(context).pop();
@@ -102,130 +90,130 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Product Detail')),
       body: _loading
-          ? const Loader(fullscreen: true, message: 'Loading product…')
+          ? const Loader(fullscreen: true, message: 'Loading product...')
           : _error != null
-          ? EmptyState(
-              title: 'Failed to load',
-              message: _error,
-              icon: Icons.error_outline,
-            )
-          : _product == null
-          ? const EmptyState(title: 'Product not found')
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                children: [
-                  _headerCard(),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryButton(
-                          label: 'Stock In',
-                          color: AppColors.secondary,
-                          icon: Icons.arrow_downward,
-                          onPressed: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => StockMovementScreen(
-                                  mode: 'STOCK_IN',
-                                  productId: _product!.id,
+              ? EmptyState(
+                  title: 'Failed to load',
+                  message: _error,
+                  icon: Icons.error_outline,
+                )
+              : _product == null
+                  ? const EmptyState(title: 'Product not found')
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        children: [
+                          _headerCard(),
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: PrimaryButton(
+                                  label: 'Stock In',
+                                  color: AppColors.secondary,
+                                  icon: Icons.arrow_downward,
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => StockMovementScreen(
+                                          mode: 'STOCK_IN',
+                                          productId: _product!.id,
+                                        ),
+                                      ),
+                                    );
+                                    _load();
+                                  },
                                 ),
                               ),
-                            );
-                            _load();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: PrimaryButton(
-                          label: 'Stock Out',
-                          color: AppColors.danger,
-                          icon: Icons.arrow_upward,
-                          onPressed: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => StockMovementScreen(
-                                  mode: 'STOCK_OUT',
-                                  productId: _product!.id,
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: PrimaryButton(
+                                  label: 'Stock Out',
+                                  color: AppColors.danger,
+                                  icon: Icons.arrow_upward,
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => StockMovementScreen(
+                                          mode: 'STOCK_OUT',
+                                          productId: _product!.id,
+                                        ),
+                                      ),
+                                    );
+                                    _load();
+                                  },
                                 ),
                               ),
-                            );
-                            _load();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _infoCard(),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryButton(
-                          label: 'Edit',
-                          outline: true,
-                          icon: Icons.edit_outlined,
-                          onPressed: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => ProductFormScreen(
-                                  mode: 'edit',
-                                  productId: _product!.id,
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _infoCard(),
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: PrimaryButton(
+                                  label: 'Edit',
+                                  outline: true,
+                                  icon: Icons.edit_outlined,
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ProductFormScreen(
+                                          mode: 'edit',
+                                          productId: _product!.id,
+                                        ),
+                                      ),
+                                    );
+                                    _load();
+                                  },
                                 ),
                               ),
-                            );
-                            _load();
-                          },
-                        ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: PrimaryButton(
+                                  label: 'Delete',
+                                  color: AppColors.danger,
+                                  icon: Icons.delete_outline,
+                                  onPressed: _delete,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const Text(
+                            'Stock History',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          if (_history.isEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: const Text(
+                                'No stock movements yet.',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          else
+                            ..._history.map(_historyRow),
+                          const SizedBox(height: AppSpacing.xxxl),
+                        ],
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: PrimaryButton(
-                          label: 'Delete',
-                          color: AppColors.danger,
-                          icon: Icons.delete_outline,
-                          onPressed: _delete,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const Text(
-                    'Stock History',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (_history.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Text(
-                        'No stock movements yet.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  else
-                    ..._history.map(_historyRow),
-                  const SizedBox(height: AppSpacing.xxxl),
-                ],
-              ),
-            ),
     );
   }
 
@@ -276,8 +264,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         color: oos
                             ? AppColors.danger
                             : low
-                            ? AppColors.warning
-                            : AppColors.textPrimary,
+                                ? AppColors.warning
+                                : AppColors.textPrimary,
                       ),
                     ),
                     const Text(
@@ -302,8 +290,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 child: Text(
                   oos
-                      ? 'Out of stock — reorder required'
-                      : 'Low stock — only ${p.quantity} units left (reorder at ${p.reorderLevel})',
+                      ? 'Out of stock - reorder required'
+                      : 'Low stock - only ${p.quantity} units left (reorder at ${p.reorderLevel})',
                   style: TextStyle(
                     color: oos ? AppColors.danger : AppColors.warning,
                     fontSize: 13,
@@ -324,7 +312,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Column(
         children: [
           _infoRow('Category', p.categoryName ?? 'Uncategorized'),
-          _infoRow('Supplier', p.supplierName ?? '—'),
+          _infoRow('Supplier', p.supplierName ?? '-'),
           _infoRow('Unit Price', Formatters.currency(p.unitPrice)),
           _infoRow('Cost Price', Formatters.currency(p.costPrice)),
           _infoRow('Margin', Formatters.currency(p.unitPrice - p.costPrice)),

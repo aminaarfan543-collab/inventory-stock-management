@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/empty_state.dart';
@@ -32,12 +32,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request('get_transactions');
+      final txs = await FirebaseService.getTransactions();
       if (mounted) {
         setState(() {
-          _all = (res['transactions'] as List? ?? [])
-              .map((j) => StockMovement.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _all = txs;
           _loading = false;
         });
       }

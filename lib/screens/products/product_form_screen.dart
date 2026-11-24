@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
 import '../../models/models.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../utils/validators.dart';
 import '../../widgets/input_field.dart';
@@ -10,7 +10,7 @@ import '../../widgets/toast.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final String mode;
-  final int? productId;
+  final String? productId;
   const ProductFormScreen({super.key, required this.mode, this.productId});
 
   @override
@@ -29,8 +29,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   List<Category> _categories = [];
   List<Supplier> _suppliers = [];
-  int? _categoryId;
-  int? _supplierId;
+  String? _categoryId;
+  String? _supplierId;
   bool _loading = false;
   bool _saving = false;
 
@@ -43,21 +43,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Future<void> _init() async {
     setState(() => _loading = true);
     try {
-      final catsRes = await Api.request('get_categories');
-      final supsRes = await Api.request('get_suppliers');
-      _categories = (catsRes['categories'] as List? ?? [])
-          .map((j) => Category.fromJson(j as Map<String, dynamic>))
-          .toList();
-      _suppliers = (supsRes['suppliers'] as List? ?? [])
-          .map((j) => Supplier.fromJson(j as Map<String, dynamic>))
-          .toList();
+      _categories = await FirebaseService.getCategories();
+      _suppliers = await FirebaseService.getSuppliers();
 
       if (widget.mode == 'edit' && widget.productId != null) {
-        final res = await Api.request(
-          'get_product',
-          query: {'id': '${widget.productId}'},
-        );
-        final p = Product.fromJson(res['product'] as Map<String, dynamic>);
+        final p = await FirebaseService.getProduct(widget.productId!);
         _nameCtrl.text = p.name;
         _skuCtrl.text = p.sku;
         _descCtrl.text = p.description;
@@ -97,14 +87,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       };
       if (widget.mode == 'add') {
         data['quantity'] = int.tryParse(_qtyCtrl.text) ?? 0;
-        await Api.request('add_product', method: 'POST', data: data);
+        await FirebaseService.addProduct(data);
       } else {
-        await Api.request(
-          'update_product',
-          method: 'PUT',
-          query: {'id': '${widget.productId}'},
-          data: data,
-        );
+        await FirebaseService.updateProduct(widget.productId!, data);
       }
       if (mounted) {
         Toast.show(
@@ -134,7 +119,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         title: Text(widget.mode == 'edit' ? 'Edit Product' : 'Add Product'),
       ),
       body: _loading
-          ? const Loader(fullscreen: true, message: 'Loading…')
+          ? const Loader(fullscreen: true, message: 'Loading...')
           : SafeArea(
               child: Form(
                 key: _formKey,
@@ -316,9 +301,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Widget _dropdown({
     required String label,
-    required int? value,
-    required List<DropdownMenuItem<int>> items,
-    required ValueChanged<int?> onChanged,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -334,9 +319,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          DropdownButtonFormField<int>(
+          DropdownButtonFormField<String>(
             initialValue: value,
-            decoration: const InputDecoration(hintText: 'Select…'),
+            decoration: const InputDecoration(hintText: 'Select...'),
             items: [
               const DropdownMenuItem(value: null, child: Text('None')),
               ...items,

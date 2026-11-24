@@ -23,10 +23,10 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      DashboardScreen(),
-      ProductsListScreen(),
-      ServicesListScreen(),
-      TransactionsScreen(),
+      const DashboardScreen(),
+      const ProductsListScreen(),
+      const ServicesListScreen(),
+      const TransactionsScreen(),
       ProfileScreen(onLogout: _logout),
     ];
 

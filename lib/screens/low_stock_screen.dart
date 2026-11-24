@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart';
 import '../models/models.dart';
+import '../services/firebase_service.dart';
 import '../theme/colors.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loader.dart';
@@ -31,12 +31,10 @@ class _LowStockScreenState extends State<LowStockScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request('get_low_stock');
+      final items = await FirebaseService.getLowStockProducts();
       if (mounted) {
         setState(() {
-          _items = (res['products'] as List? ?? [])
-              .map((j) => Product.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _items = items;
           _loading = false;
         });
       }

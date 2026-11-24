@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
@@ -17,14 +17,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _usernameCtrl.dispose();
+    _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -33,16 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final res = await Api.request(
-        'login',
-        method: 'POST',
-        publicRequest: true,
-        data: {
-          'username': _usernameCtrl.text.trim(),
-          'password': _passwordCtrl.text,
-        },
-      );
-      await Api.saveToken(res['token'].toString());
+      await FirebaseService.login(_emailCtrl.text, _passwordCtrl.text);
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainApp()),
@@ -103,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Track products, stock levels, and transactions — all in one place.',
+                  'Track products, stock levels, and transactions - all in one place.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
@@ -116,11 +107,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         InputField(
-                          label: 'Username',
-                          hint: 'e.g. admin',
-                          controller: _usernameCtrl,
-                          validator: Validators.username,
-                          prefix: const Icon(Icons.person_outline, size: 20),
+                          label: 'Email',
+                          hint: 'e.g. admin@inventory.com',
+                          controller: _emailCtrl,
+                          validator: Validators.email,
+                          keyboardType: TextInputType.emailAddress,
+                          prefix: const Icon(Icons.email_outlined, size: 20),
                         ),
                         InputField(
                           label: 'Password',
@@ -167,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'username: admin\npassword: admin123',
+                                'email: admin@inventory.com\npassword: admin123',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.primaryDark,

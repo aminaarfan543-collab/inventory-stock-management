@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
 import '../../models/models.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/empty_state.dart';
@@ -31,12 +31,10 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
       _error = null;
     });
     try {
-      final res = await Api.request('get_services');
+      final services = await FirebaseService.getServices();
       if (mounted) {
         setState(() {
-          _services = (res['services'] as List? ?? [])
-              .map((j) => Service.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _services = services;
           _loading = false;
         });
       }

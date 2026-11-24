@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../api.dart';
-import '../../models/models.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/colors.dart';
 import '../../utils/validators.dart';
 import '../../widgets/confirm_dialog.dart';
@@ -11,7 +10,7 @@ import '../../widgets/toast.dart';
 
 class ServiceFormScreen extends StatefulWidget {
   final String mode;
-  final int? serviceId;
+  final String? serviceId;
   const ServiceFormScreen({super.key, required this.mode, this.serviceId});
 
   @override
@@ -35,11 +34,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await Api.request(
-        'get_service',
-        query: {'id': '${widget.serviceId}'},
-      );
-      final s = Service.fromJson(res['service'] as Map<String, dynamic>);
+      final s = await FirebaseService.getService(widget.serviceId!);
       _nameCtrl.text = s.name;
       _descCtrl.text = s.description;
       _priceCtrl.text = s.price.toString();
@@ -66,14 +61,9 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         'price': double.tryParse(_priceCtrl.text) ?? 0,
       };
       if (widget.mode == 'add') {
-        await Api.request('add_service', method: 'POST', data: data);
+        await FirebaseService.addService(data);
       } else {
-        await Api.request(
-          'update_service',
-          method: 'PUT',
-          query: {'id': '${widget.serviceId}'},
-          data: data,
-        );
+        await FirebaseService.updateService(widget.serviceId!, data);
       }
       if (mounted) {
         Toast.show(
@@ -106,11 +96,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     );
     if (!ok) return;
     try {
-      await Api.request(
-        'delete_service',
-        method: 'DELETE',
-        query: {'id': '${widget.serviceId}'},
-      );
+      await FirebaseService.deleteService(widget.serviceId!);
       if (mounted) {
         Toast.show(context, 'Service deleted', isSuccess: true);
         Navigator.of(context).pop();
