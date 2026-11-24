@@ -1,7 +1,9 @@
-Inventory Stock Management App
+Inventory Stock Management App:
+
 A complete retail inventory management mobile application built with Flutter and Firebase. Designed for small retail businesses to manage products, services, suppliers, categories, stock levels, and transaction history — all in real-time.
 
-Features
+Features:
+
 User Authentication — Secure email/password login via Firebase Auth
 Dashboard — Live stats for total products, stock units, low-stock alerts, inventory value, and services
 Products Management — Add, edit, delete, and view products with SKU, price, cost, quantity, reorder level
@@ -15,6 +17,8 @@ Search & Filter — Search by name/SKU, filter by category, sort by name/stock/p
 Real-time Sync — Data stored in Firebase Firestore, accessible from anywhere
 
 Tech Stack
+
+
 Frontend: Flutter (Dart)
 Backend: Firebase (Firestore + Authentication)
 Database: Cloud Firestore (NoSQL)
